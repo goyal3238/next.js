@@ -69,6 +69,7 @@ use crate::{
         collect_chunk_group, collect_evaluated_chunk_group, collect_next_dynamic_imports,
         DynamicImportedChunks,
     },
+    middleware::{get_js_paths_from_root, get_wasm_paths_from_root, wasm_paths_to_bindings},
     project::Project,
     route::{Endpoint, Route, Routes, WrittenEndpoint},
     server_paths::all_server_paths,
@@ -977,22 +978,14 @@ impl PageEndpoint {
                     "server/middleware-react-loadable-manifest.js".to_string(),
                     "server/next-font-manifest.js".to_string(),
                 ];
+                let mut wasm_paths_from_root = vec![];
 
                 let node_root_value = node_root.await?;
-                let middleware_paths_from_root: Vec<String> = files_value
-                    .iter()
-                    .map(move |&file| {
-                        let node_root_value = node_root_value.clone();
-                        async move {
-                            Ok(node_root_value
-                                .get_path_to(&*file.ident().path().await?)
-                                .map(|path| path.to_string()))
-                        }
-                    })
-                    .try_flat_join()
-                    .await?;
 
-                file_paths_from_root.extend(middleware_paths_from_root);
+                file_paths_from_root
+                    .extend(get_js_paths_from_root(&node_root_value, &files_value).await?);
+                wasm_paths_from_root
+                    .extend(get_wasm_paths_from_root(&node_root_value, &files_value).await?);
 
                 let pathname = this.pathname.await?;
                 let named_regex = get_named_middleware_regex(&pathname);
@@ -1004,6 +997,7 @@ impl PageEndpoint {
                 let original_name = this.original_name.await?;
                 let edge_function_definition = EdgeFunctionDefinition {
                     files: file_paths_from_root,
+                    wasm: wasm_paths_to_bindings(wasm_paths_from_root),
                     name: pathname.to_string(),
                     page: original_name.to_string(),
                     regions: None,

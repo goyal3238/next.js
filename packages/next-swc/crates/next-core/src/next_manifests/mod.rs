@@ -90,14 +90,19 @@ pub struct EdgeFunctionDefinition {
     pub name: String,
     pub page: String,
     pub matchers: Vec<MiddlewareMatcher>,
-    // TODO: AssetBinding[]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub wasm: Option<Vec<()>>,
-    // TODO: AssetBinding[]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub assets: Option<Vec<()>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub wasm: Vec<AssetBinding>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub assets: Vec<AssetBinding>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub regions: Option<Regions>,
+}
+
+#[derive(Serialize, Default, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetBinding {
+    pub name: String,
+    pub file_path: String,
 }
 
 #[derive(Serialize, Debug)]
