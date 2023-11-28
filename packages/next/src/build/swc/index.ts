@@ -539,8 +539,10 @@ export interface Entrypoints {
   pagesErrorEndpoint: Endpoint
 }
 
+// just a stub, can't import the real type from `@vercel/turbopack-ecmascript-runtime`
 export interface Update {
-  update: unknown
+  type: string
+  issues: Issue[]
 }
 
 export interface HmrIdentifiers {
